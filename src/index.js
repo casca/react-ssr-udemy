@@ -31,9 +31,24 @@ app.get('*', (req, res) => {
   // matchRoutes(Routes, req.path).map(({ route }) => {
   //   return route.loadData ? route.loadData() : null;
   // });
-  const promises = matchRoutes(Routes, req.path).map(({ route }) =>
-    route.loadData ? route.loadData(store) : null,
-  );
+  const promises = matchRoutes(Routes, req.path)
+    .map(({ route }) => (route.loadData ? route.loadData(store) : null))
+    .map((promise) => {
+      if (promise) {
+        return new Promise((resolve, reject) => {
+          promise.then(resolve).catch(resolve);
+        });
+      }
+    });
+
+  // const render = () => {
+  //   const context = {};
+  //   const content = renderer(req, store, context);
+  //   if (context.notFound) {
+  //     res.status(404);
+  //   }
+  //   res.send(content);
+  // };
 
   Promise.all(promises).then(() => {
     const context = {};
@@ -43,6 +58,11 @@ app.get('*', (req, res) => {
     }
     res.send(content);
   });
+  // .catch(render);
+
+  // .catch(() => {
+  // res.send('Something went wrong');
+  // });
 });
 
 app.listen(3000, () => {
